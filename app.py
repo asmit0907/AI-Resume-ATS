@@ -5,7 +5,7 @@ import time
 from dotenv import load_dotenv
 from parser import get_document_text
 # Agar aapke function ka naam 'analyze_resume' tha:
-from ai_engine import analyze_resume as analyze_resume_data
+from ai_engine import analyze_resume_realtime as analyze_resume_data
 from generator import generate_resume_docx, generate_resume_pdf
 
 load_dotenv()
