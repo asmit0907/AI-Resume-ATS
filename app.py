@@ -265,7 +265,7 @@ if st.button("🚀 Run Comprehensive ATS Optimization", use_container_width=True
                 st.markdown("<div style='margin: 10px 0;'></div>", unsafe_allow_html=True) # Spacing element
                 
                 # 2. PDF Export Integration
-                pdf_buffer = generate_resume_pdf(optimized_resume_content)
+                pdf_buffer = generate_resume_pdf(resume_text, optimized_resume_content)
                 st.download_button(
                     label="📥 Export Optimized Resume (.PDF)",
                     data=pdf_buffer,
