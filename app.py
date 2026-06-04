@@ -251,18 +251,31 @@ if st.button("🚀 Run Comprehensive ATS Optimization", use_container_width=True
                 st.markdown('<div class="card-container">', unsafe_allow_html=True)
                 st.markdown("#### 🛠️ Available Actions")
                 
-                # DOCX Export Integration
+                # 1. DOCX Export Integration
                 docx_buffer = generate_resume_docx(resume_text, optimized_resume_content)
                 st.download_button(
-                label="📥 Export Optimized Resume (.DOCX)",
-                data=docx_buffer,
-                file_name=f"Optimized_{target_role.replace(' ', '_')}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True,
-                key="ultimate_docx_download"  # <-- Unique key jodd di hai duplicate ID crash rokne ke liye
-)
+                    label="📥 Export Optimized Resume (.DOCX)",
+                    data=docx_buffer,
+                    file_name=f"Optimized_{target_role.replace(' ', '_')}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True,
+                    key="ultimate_docx_download"
+                )
                 
-                st.markdown("<p style='font-size:12px; color:#B0B3B8; text-align:center;'>ATS Vector formatting tracking protocols are active within the docx file structure.</p>", unsafe_allow_html=True)
+                st.markdown("<div style='margin: 10px 0;'></div>", unsafe_allow_html=True) # Spacing element
+                
+                # 2. PDF Export Integration
+                pdf_buffer = generate_resume_pdf(optimized_resume_content)
+                st.download_button(
+                    label="📥 Export Optimized Resume (.PDF)",
+                    data=pdf_buffer,
+                    file_name=f"Optimized_{target_role.replace(' ', '_')}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key="ultimate_pdf_download"  # Unique key for PDF button
+                )
+                
+                st.markdown("<p style='font-size:11px; color:#B0B3B8; text-align:center; margin-top:15px;'>Both DOCX and PDF structural weights are optimized for ATS parser indexing.</p>", unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
                 
         except Exception as e:
