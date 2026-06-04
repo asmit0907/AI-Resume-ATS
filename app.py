@@ -155,7 +155,7 @@ if st.button("🚀 Run Comprehensive ATS Optimization", use_container_width=True
         try:
             # Process text and trigger AI core
             resume_text = get_document_text(uploaded_file)
-            analysis_report = analyze_resume_data(resume_text, job_description, target_role)
+            analysis_report = analyze_resume_data(resume_text, job_description)
             
             # --- RESULTS DASHBOARD WITH SLICK CARDS ---
             st.balloons() # Interactive celebratory trigger
