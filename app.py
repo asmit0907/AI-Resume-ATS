@@ -4,7 +4,7 @@ import os
 import time
 from dotenv import load_dotenv
 from parser import get_document_text
-from ai_engine import analyze_resume_data, analyze_resume_realtime
+from ai_engine import analyze_resume_realtime
 from generator import generate_resume_docx, generate_resume_pdf
 
 load_dotenv()
