@@ -219,40 +219,63 @@ if st.button("🚀 Run Comprehensive ATS Optimization", use_container_width=True
                     
                 st.markdown('</div>', unsafe_allow_html=True)
 
-            # --- NEW INTERACTIVE LIVE RESUME BUILDER & PREVIEW PIPELINE ---
+           # --- NEW INTERACTIVE LIVE RESUME BUILDER & PREVIEW PIPELINE ---
             st.markdown("---")
-            st.markdown("### 📝 Tailored Resume Preview & Export Engine")
+            st.markdown("### 📝 Tailored Full Resume Preview & Export Engine")
             
-            with st.spinner("🧠 Groq AI is engineering your tailored resume fields..."):
-                # Hum functional text pass kar rahe hain jo dynamic tracking algorithms ko clear karega
-                optimized_resume_content = f"""
-                OBJECTIVE
-                Highly analytical and detail-oriented professional seeking to leverage proven expertise as a {target_role}. Equipped with technical proficiency compiled directly across key evaluation metrics.
-
-                TECHNICAL CORE STACK
-                • Languages & Tools: Python, SQL, Framework Logic Elements
-                • Specialized Domains: {', '.join(data.get('missing_keywords', ['Data Analysis', 'Dashboards'])) if 'data' in locals() else 'System Matrix Analytics'}
+            with st.spinner("🧠 Groq AI is engineering your fully optimized corporate resume..."):
+                # Hum direct Groq API ko bol rahe hain ki naya full resume text text-stream format mein generate kare
+                import os
+                from groq import Groq
                 
-                PROFESSIONAL EXPERIENCE & ACHIEVEMENTS
-                • Integrated systemic data structures and parsed relational schema structures to drive business optimization metrics.
-                • Designed and maintained automated reporting matrices that optimized project analysis workflows.
+                client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+                
+                # Dynamic Prompt for Full Resume Construction
+                prompt = f"""
+                You are an expert technical resume writer. Rewrite the user's original resume to perfectly align with the target job description while maximizing ATS score tracking tokens.
+                
+                Original Resume Text:
+                {resume_text}
+                
+                Target Job Description:
+                {job_description}
+                
+                Target Role:
+                {target_role}
+                
+                Instructions:
+                1. Include all standard professional sections: OBJECTIVE/SUMMARY, EDUCATION, TECHNICAL SKILLS (incorporating missing keywords seamlessly), PROJECTS, and EXPERIENCE.
+                2. Use clear, impact-driven action verbs and clean corporate structuring.
+                3. Do NOT add any conversational headers, introduction, or text brackets. Give ONLY the pure optimized resume content.
                 """
-            
+                
+                try:
+                    completion = client.chat.completions.create(
+                        model="llama3-8b-8192",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.3
+                    )
+                    optimized_resume_content = completion.choices[0].message.content
+                except Exception:
+                    # Fallback backup case if API throttles
+                    optimized_resume_content = resume_text
+
             # Layout splits for preview and interactive downloads
             prev_col1, prev_col2 = st.columns([2, 1], gap="medium")
             
             with prev_col1:
                 st.markdown('<div class="card-container" style="background: rgba(255,255,255,0.01); border-left: 4px solid #C850C0;">', unsafe_allow_html=True)
-                st.markdown("#### 👁️ Real-time Document Preview")
-                st.text_area("Live Generated Token Streams (Editable)", value=optimized_resume_content.strip(), height=250)
+                st.markdown("#### 👁️ Real-time Full Document Preview")
+                # User direct screen par hi edit bhi kar sakta hai download karne se pehle
+                final_edited_resume = st.text_area("Live Generated Corporate Stream (Editable)", value=optimized_resume_content.strip(), height=400)
                 st.markdown('</div>', unsafe_allow_html=True)
                 
             with prev_col2:
                 st.markdown('<div class="card-container">', unsafe_allow_html=True)
                 st.markdown("#### 🛠️ Available Actions")
                 
-                # 1. DOCX Export Integration
-                docx_buffer = generate_resume_docx(resume_text, optimized_resume_content)
+                # 1. DOCX Export Integration (Passing final edited text)
+                docx_buffer = generate_resume_docx(resume_text, final_edited_resume)
                 st.download_button(
                     label="📥 Export Optimized Resume (.DOCX)",
                     data=docx_buffer,
@@ -262,20 +285,20 @@ if st.button("🚀 Run Comprehensive ATS Optimization", use_container_width=True
                     key="ultimate_docx_download"
                 )
                 
-                st.markdown("<div style='margin: 10px 0;'></div>", unsafe_allow_html=True) # Spacing element
+                st.markdown("<div style='margin: 10px 0;'></div>", unsafe_allow_html=True)
                 
-                # 2. PDF Export Integration
-                pdf_buffer = generate_resume_pdf(resume_text, optimized_resume_content)
+                # 2. PDF Export Integration (Passing final edited text)
+                pdf_buffer = generate_resume_pdf(resume_text, final_edited_resume)
                 st.download_button(
                     label="📥 Export Optimized Resume (.PDF)",
                     data=pdf_buffer,
                     file_name=f"Optimized_{target_role.replace(' ', '_')}.pdf",
                     mime="application/pdf",
                     use_container_width=True,
-                    key="ultimate_pdf_download"  # Unique key for PDF button
+                    key="ultimate_pdf_download"
                 )
                 
-                st.markdown("<p style='font-size:11px; color:#B0B3B8; text-align:center; margin-top:15px;'>Both DOCX and PDF structural weights are optimized for ATS parser indexing.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size:11px; color:#B0B3B8; text-align:center; margin-top:15px;'>Full-scale industrial resume compilation pipeline is active. Files are completely ready for corporate application pools.</p>", unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
                 
         except Exception as e:
