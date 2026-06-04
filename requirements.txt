@@ -5,3 +5,4 @@ docx2txt
 python-docx
 markdown
 xhtml2pdf
+python-dotenv
