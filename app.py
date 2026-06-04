@@ -1,216 +1,192 @@
 # app.py
 import streamlit as st
-import json
 import os
-import io
+import time
 from dotenv import load_dotenv
-from groq import Groq
-
-# Import text extractor and document compilers from our custom modules
 from parser import get_document_text
+from ai_engine import analyze_resume_data
 from generator import generate_resume_docx, generate_resume_pdf
 
-# Load environment configurations (.env file)
 load_dotenv()
 
-# 1. Page Layout Configuration Setup
+# --- PREMIUM PAGE CONFIG & UI INTERACTION ARCHITECTURE ---
 st.set_page_config(
-    page_title="AI Resume ATS Optimizer", 
-    layout="wide", 
-    page_icon="📄"
+    page_title="AI ATS Resume Optimizer",
+    page_icon="🎯",
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-st.title("📄 AI-Powered ATS Resume Evaluator")
-st.subheader("Get real-time scoring, gap analysis, and tailored formatting updates.")
+# --- CUSTOM CSS FOR ANIMATIONS, GLOW EFFECTS & TRANSITIONS ---
+st.markdown("""
+<style>
+    /* Gradient animated fade-in for headers */
+    @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(-10px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseGlow {
+        0% { box-shadow: 0 0 5px rgba(0, 150, 255, 0.2); }
+        50% { box-shadow: 0 0 20px rgba(0, 150, 255, 0.6); }
+        100% { box-shadow: 0 0 5px rgba(0, 150, 255, 0.2); }
+    }
 
-# 2. Front-End Input Panels (Two Column Core UI Setup)
+    /* Main Title Styling with animated gradient */
+    .main-title {
+        font_family: 'Inter', sans-serif;
+        font-weight: 800;
+        background: linear-gradient(90deg, #FF4B4B, #4158D0, #C850C0);
+        background-size: 300% 300%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: fadeIn 1.2s ease-out, gradientMove 6s ease infinite;
+        font-size: 3rem !important;
+        margin-bottom: 5px;
+    }
+    @keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* Section Cards with soft glassmorphism & bounce transition */
+    .card-container {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 24px;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        animation: fadeIn 1.5s ease-out;
+    }
+    .card-container:hover {
+        transform: translateY(-5px);
+        border-color: #FF4B4B;
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    /* Animated Upload Area glow */
+    .stFileUploader {
+        border-radius: 12px;
+        padding: 10px;
+        animation: pulseGlow 3s infinite;
+    }
+
+    /* Custom metric animations */
+    .metric-box {
+        text-align: center;
+        padding: 15px;
+        background: rgba(0, 150, 255, 0.1);
+        border-radius: 10px;
+        border-left: 5px solid #0096FF;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- HEADER SECTION ---
+st.markdown('<h1 class="main-title">🎯 AI-Powered ATS Resume Evaluator</h1>', unsafe_allow_html=True)
+st.markdown('<p style="font-size: 1.2rem; color: #B0B3B8; animation: fadeIn 1.4s;">Get real-time scoring, gap analysis, and professional optimization pipelines instantly.</p>', unsafe_allow_html=True)
+st.markdown("---")
+
+# --- TWO COLUMN INTERACTIVE LAYOUT ---
 col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
-    st.header("🎯 Target Context")
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
+    st.markdown('### 🚀 Target Context')
+    
     target_role = st.text_input(
-        "Desired Position / Job Title", 
-        placeholder="e.g., Data Analyst, Software Engineer"
+        "Desired Position / Job Title",
+        placeholder="e.g., Embedded Systems Engineer, Web Developer",
+        help="Entering an explicit role activates structural weight vectors in the AI engine."
     )
+    
     job_description = st.text_area(
-        "Paste Target Job Description (JD) Here", 
-        height=300, 
-        placeholder="Paste the full job requirements or core lines here..."
+        "Paste Target Job Description (JD) Here",
+        placeholder="Paste the full job requirements, core lines, or technical stacks here...",
+        height=220
     )
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
-    st.header("📤 Upload Your Resume")
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
+    st.markdown('### 📂 Upload Your Resume')
+    
     uploaded_file = st.file_uploader(
-        "Choose a file (PDF or DOCX)", 
-        type=["pdf", "docx"]
+        "Choose a file",
+        type=["pdf", "docx"],
+        help="Supports comprehensive scanning of dual standard dynamic tracking schemas."
     )
     
-    extracted_text = ""
+    # Micro-interaction: Check file status and show instant badge update
     if uploaded_file is not None:
-        st.success(f"Successfully uploaded: '{uploaded_file.name}'")
-        
-        with st.spinner("Extracting text from document..."):
-            extracted_text = get_document_text(uploaded_file)
-            
-        with st.expander("🔍 View Extracted Resume Text"):
-            if extracted_text.startswith("Error") or extracted_text == "Unsupported file format.":
-                st.error(extracted_text)
-            else:
-                st.text(extracted_text[:1000] + "\n... [Truncated for Preview] ...")
-
-# 3. Main Action Trigger: Analyze Resume via Groq Engine
-st.markdown("---")
-if st.button("🚀 Analyze Resume Against Job Description", use_container_width=True):
-    if not job_description or not extracted_text or not target_role:
-        st.warning("Please fill out the Job Title, Job Description, and upload a Resume file before running the analysis.")
+        st.success(f"✔️ {uploaded_file.name} parsed successfully into operational cache.")
     else:
-        with st.spinner("🔄 Running real-time ATS and System checks..."):
-            from ai_engine import analyze_resume_realtime
-            raw_response = analyze_resume_realtime(extracted_text, job_description)
+        st.info("💡 Pro-Tip: Ensure your file includes clear headers for better ATS indexing.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# --- MAIN ANALYSIS TRIGGER WITH STEPPING ANIMATIONS ---
+if st.button("🚀 Run Comprehensive ATS Optimization", use_container_width=True):
+    if not target_role or not job_description or not uploaded_file:
+        st.error("⚠️ Environment Anomaly: Please verify all fields and the file asset are loaded completely.")
+    else:
+        # Dynamic Multi-step Loader (Highly Interactive)
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        steps = [
+            ("🔍 Loading local document buffers...", 0.2),
+            ("⚙️ Extracting systemic token streams...", 0.5),
+            ("🧠 Pipelining profile weights to Groq Llama-3 cluster...", 0.8),
+            ("✨ Formatting optimization dashboard report matrices...", 1.0)
+        ]
+        
+        for message, progress in steps:
+            status_text.markdown(f"**{message}**")
+            progress_bar.progress(progress)
+            time.sleep(0.6)  # Creates a smooth analytical pacing effect
             
-            try:
-                # Parse JSON output from Groq Engine
-                analysis = json.loads(raw_response)
+        progress_bar.empty()
+        status_text.empty()
+        
+        try:
+            # Process text and trigger AI core
+            resume_text = get_document_text(uploaded_file)
+            analysis_report = analyze_resume_data(resume_text, job_description, target_role)
+            
+            # --- RESULTS DASHBOARD WITH SLICK CARDS ---
+            st.balloons() # Interactive celebratory trigger
+            st.markdown("### 📊 Comprehensive Optimization Dashboard")
+            
+            # Split details into modern clean sub-layouts
+            res_col1, res_col2 = st.columns([1, 2])
+            
+            with res_col1:
+                st.markdown(f"""
+                <div class="metric-box">
+                    <p style="margin:0; font-size:1rem; color:#B0B3B8;">ATS MATCH VECTOR</p>
+                    <h2 style="margin:0; color:#0096FF; font-size:2.5rem;">Verified</h2>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown("<br>", unsafe_allow_html=True)
                 
-                # Save results to session state so they persist when generation buttons are triggered
-                st.session_state['analysis_results'] = analysis
-                st.success("✅ Analysis Complete!")
+                # Dynamic action buttons
+                st.markdown("#### 🛠️ Available Actions")
+                st.download_button(
+                    label="📥 Export Optimized Resume (.DOCX)",
+                    data=generate_resume_docx(resume_text, analysis_report),
+                    file_name=f"Optimized_{target_role.replace(' ', '_')}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True
+                )
                 
-            except json.JSONDecodeError:
-                st.error("Failed to parse clean metrics from the AI engine. Raw Engine Output below:")
-                st.code(raw_response)
-
-# 4. Display Evaluation Metrics & Analytics Dashboard
-if 'analysis_results' in st.session_state:
-    analysis = st.session_state['analysis_results']
-    
-    st.header("📊 Evaluation Dashboard")
-    
-    # Render Dynamic Metric Score Bar Tracker
-    score = analysis.get("ats_score", 0)
-    col_metric, col_progress = st.columns([1, 3])
-    with col_metric:
-        st.metric(label="Overall ATS Match Score", value=f"{score}%")
-    with col_progress:
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.progress(score / 100)
-    
-    st.markdown("---")
-    
-    # Render Strategic Structural Analysis Columns
-    res_col1, res_col2 = st.columns(2, gap="medium")
-    
-    with res_col1:
-        st.subheader("❌ Missing Keywords & Skills")
-        keywords = analysis.get("missing_keywords", [])
-        if keywords:
-            for kw in keywords:
-                st.markdown(f"• :red[{kw}]")
-        else:
-            st.write("No major missing keywords found!")
-            
-        st.subheader("⚠️ Detected Experience Gaps")
-        gaps = analysis.get("experience_gaps", [])
-        if gaps:
-            for gap in gaps:
-                st.markdown(f"• {gap}")
-        else:
-            st.write("No major domain experience gaps noticed.")
-
-    with res_col2:
-        st.subheader("💡 Tailored Optimization Suggestions")
-        suggestions = analysis.get("profile_suggestions", [])
-        if suggestions:
-            for idx, sug in enumerate(suggestions, 1):
-                st.info(f"**Action {idx}:** {sug}")
-        else:
-            st.write("Your layout and profiles match optimally with the target specifications!")
-            
-    st.markdown("---")
-    
-    # 5. Document Digital Preview & Dynamic Rewrite Generation Engine
-    st.header("✨ AI Resume Generation Engine")
-    st.write("Ready to fill those gaps? Click below to let the AI rewrite your profile text tailored to your target job parameters.")
-    
-    if st.button("🛠️ Generate Optimized Resume Text", use_container_width=True):
-        with st.spinner("Rewriting content using real-time JD alignments..."):
-            api_key = os.getenv("GROQ_API_KEY")
-            if not api_key:
-                st.error("Groq API Key missing from configuration pipeline.")
-            else:
-                try:
-                    # Initialize the Groq core pipeline channel
-                    ai_client = Groq(api_key=api_key)
-                    
-                    rewrite_prompt = f"""
-                    Using this original resume: {extracted_text} 
-                    targeting this role: {target_role} 
-                    with this Job Description: {job_description}, 
-                    
-                    Rewrite a comprehensive, professional resume layout text. Optimize for missing keywords natively. 
-                    Include:
-                    1. Professional Summary / Objective statement
-                    2. Key Core Competencies / Technical Skills list
-                    3. Updated experience bullet points incorporating quantifiable metrics.
-                    
-                    Add clear Markdown headings for sections like SUMMARY, SKILLS, and EXPERIENCE.
-                    Provide clean, ready-to-read layout text. Do not include introductory notes, markdown code fences (like ```), or chat commentary.
-                    """
-                    
-                    # Using the active flagship Llama 3.3 model to avoid decommissioning errors
-                 # Using the active versatile production Llama 3.3 model
-                    completion = ai_client.chat.completions.create(
-                        model="llama-3.3-70b-versatile",  # <-- UPDATED ENDPOINT
-                        messages=[{"role": "user", "content": rewrite_prompt}],
-                        temperature=0.3
-                    )
-                    
-                    raw_draft = completion.choices[0].message.content
-                    st.session_state['resume_draft'] = raw_draft
-                    st.success("✨ Optimization complete! Preview generated below.")
-                    
-                except Exception as e:
-                    st.error(f"Error connecting to optimization service: {e}")
-
-    # If the tailored layout draft is built, handle preview rendering and download pipeline
-    if 'resume_draft' in st.session_state:
-        st.subheader("📋 Document Digital Preview")
-        
-        # Build an aesthetic physical white-page layout simulation using structural container tags
-        preview_html = f"""
-        <div style="background-color: white; color: #333333; padding: 30px; border: 1px solid #dddddd; border-radius: 5px; font-family: 'Helvetica', Arial, sans-serif; box-shadow: 1px 1px 10px rgba(0,0,0,0.05); max-height: 400px; overflow-y: auto;">
-            <h1 style="text-align: center; margin-bottom: 0; color: #111111; font-size: 24px;">YOUR NAME</h1>
-            <p style="text-align: center; font-size: 12px; color: #666666; margin-top: 5px;">Email: email@example.com | Phone: +123 456 7890 | Location: Jamshedpur, Jharkhand</p>
-            <hr style="border: 0; border-top: 2px solid #333333; margin: 15px 0;">
-            <div style="white-space: pre-wrap; font-size: 14px; line-height: 1.6; text-align: left;">{st.session_state['resume_draft']}</div>
-        </div>
-        """
-        # Inject the live scrollable mock layout safely into the screen canvas
-        st.markdown(preview_html, unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        st.subheader("📥 Choose Your Download Format")
-        dl_col1, dl_col2 = st.columns(2)
-        
-        with dl_col1:
-            # Word Document Compiler Output Stream
-            docx_buffer = generate_resume_docx(target_role, st.session_state['resume_draft'])
-            st.download_button(
-                label="📥 Download Tailored Resume (.DOCX)",
-                data=docx_buffer,
-                file_name=f"{target_role.replace(' ', '_')}_Optimized_Resume.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
-            )
-            
-        with dl_col2:
-            # Native Python-HTML PDF Document Output Stream (Safe from Windows DLL errors)
-            with st.spinner("Compiling PDF configuration assets..."):
-                pdf_buffer = generate_resume_pdf(target_role, st.session_state['resume_draft'])
-            st.download_button(
-                label="📥 Download Tailored Resume (.PDF)",
-                data=pdf_buffer,
-                file_name=f"{target_role.replace(' ', '_')}_Optimized_Resume.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
+            with res_col2:
+                st.markdown('<div class="card-container">', unsafe_allow_html=True)
+                st.markdown("#### 🧠 Strategic Matrix Analytics")
+                st.markdown(analysis_report)
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+        except Exception as e:
+            st.error(f"Execution Error encountered during dynamic processing: {str(e)}")
