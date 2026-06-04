@@ -254,12 +254,13 @@ if st.button("🚀 Run Comprehensive ATS Optimization", use_container_width=True
                 # DOCX Export Integration
                 docx_buffer = generate_resume_docx(resume_text, optimized_resume_content)
                 st.download_button(
-                    label="📥 Export Optimized Resume (.DOCX)",
-                    data=docx_buffer,
-                    file_name=f"Optimized_{target_role.replace(' ', '_')}.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True
-                )
+                label="📥 Export Optimized Resume (.DOCX)",
+                data=docx_buffer,
+                file_name=f"Optimized_{target_role.replace(' ', '_')}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True,
+                key="ultimate_docx_download"  # <-- Unique key jodd di hai duplicate ID crash rokne ke liye
+)
                 
                 st.markdown("<p style='font-size:12px; color:#B0B3B8; text-align:center;'>ATS Vector formatting tracking protocols are active within the docx file structure.</p>", unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
