@@ -79,29 +79,43 @@ st.markdown('<p style="font-size: 1.2rem; color: #B0B3B8;">Get real-time scoring
 st.markdown("---")
 
 # --- TWO COLUMN INPUT LAYOUT ---
+# --- TWO COLUMN INPUT LAYOUT ---
 col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
-    st.markdown('### 🚀 Target Context')
+    # Heading aur saare input fields is container div ke andar hone chahiye:
+    st.markdown("""
+    <div class="card-container">
+        <h3 style="margin-top:0; padding-top:0;">🚀 Target Context</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
     target_role = st.text_input(
         "Desired Position / Job Title",
-        placeholder="e.g., Data Analyst, Software Engineer"
+        placeholder="e.g., Data Analyst, Software Engineer",
+        key="role_input_field"
     )
+    
     job_description = st.text_area(
         "Paste Target Job Description (JD) Here",
         placeholder="Paste the full job requirements or core lines here...",
-        height=220
+        height=220,
+        key="jd_input_field"
     )
-    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
-    st.markdown('<div class="card-container">', unsafe_allow_html=True)
-    st.markdown('### 📂 Upload Your Resume')
+    st.markdown("""
+    <div class="card-container">
+        <h3 style="margin-top:0; padding-top:0;">📂 Upload Your Resume</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
     uploaded_file = st.file_uploader(
         "Choose a file",
-        type=["pdf", "docx"]
+        type=["pdf", "docx"],
+        key="uploader_widget_field"
     )
+    
     if uploaded_file is not None:
         st.success(f"✔️ {uploaded_file.name} loaded successfully.")
     else:
